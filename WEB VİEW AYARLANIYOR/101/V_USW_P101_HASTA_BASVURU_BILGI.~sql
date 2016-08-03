@@ -1,0 +1,95 @@
+﻿SELECT
+        "HG"."ID" AS HK_ID,
+        BS.ID AS DETAY_ID,
+        NULL AS AMBULANS_TAKIP_NUMARASI,
+        (SELECT X.DEGER FROM FONETHBS.PARAMETRE_DEGER X WHERE X.PARAMETRE_KEY = 'ENTEGRASYON3') AS HIZMET_SUNUCU#K,
+        (SELECT XA.ADI FROM FONETHBS.USBS_KURUMLAR XA WHERE  XA.KODU IN (SELECT X.DEGER FROM FONETHBS.PARAMETRE_DEGER X WHERE X.PARAMETRE_KEY = 'ENTEGRASYON3')) AS HIZMET_SUNUCU#A#Z,
+        'c3eade04-4f91-5dab-e043-14031b0ac9f9' AS HIZMET_SUNUCU#C,
+        (SELECT X.DEGER FROM FONETHBS.PARAMETRE_DEGER X WHERE X.PARAMETRE_KEY = 'ENTEGRASYON3')  AS KAYIT_YERI#K,
+        (SELECT XA.ADI FROM FONETHBS.USBS_KURUMLAR XA WHERE  XA.KODU IN (SELECT X.DEGER FROM FONETHBS.PARAMETRE_DEGER X WHERE X.PARAMETRE_KEY = 'ENTEGRASYON3')) AS KAYIT_YERI#A#Z,
+        'c3eade04-4f91-5dab-e043-14031b0ac9f9' AS KAYIT_YERI#C,
+        (SELECT NVL(MAX(DECODE(OP.PROTOKOL_NO,NULL,OP.KURUM_PROTOKOL_NO,OP.PROTOKOL_NO)),'-') FROM FONETHBS.ONLINE_PROTOKOL OP WHERE OP.POLIKLINIK_ID = POL.ID) AS PROTOKOL_NUMARASI#Z,
+          HG.ID AS HK_ID,
+          BS.TAKIP_NO AS SGK_TAKIP_NUMARASI#Z,
+          TO_CHAR(POL.KABUL_TARIHI, 'YYYYMMDDHH24MI') AS KABUL_ZAMANI#Z,
+          (select U.SKRS_KODU from FONETHBS.UZMANLIK U WHERE U.KODU IN (SELECT X.UZMANLIK_KODU FROM FONETHBS.BIRIM X WHERE X.ID = BS.BIRIM_ID)) AS KLINIK_KODU#K,
+          USS.GET_GUID_VALUE('c04bee57-c5d4-443d-e040-7b0a6f146a3d',(select U.SKRS_KODU from FONETHBS.UZMANLIK U WHERE U.KODU IN (SELECT X.UZMANLIK_KODU FROM FONETHBS.BIRIM X WHERE X.ID = BS.BIRIM_ID))) AS KLINIK_KODU#A,
+          'c04bee57-c5d4-443d-e040-7b0a6f146a3d' AS KLINIK_KODU#C,
+          HS.ID,HS.SINIF_TURU,HG.DEVREDILEN_KURUM,
+          (SELECT
+                    CASE
+                      WHEN HS.SINIF_TURU IN (4,1)  AND NVL(HG.DEVREDILEN_KURUM,0) NOT IN (1,2,3) AND BS.TAKIP_NO IS NOT NULL  THEN '30'
+                      WHEN NVL(HG.DEVREDILEN_KURUM,0) IN (2) THEN '31'
+                      WHEN NVL(HG.DEVREDILEN_KURUM,0) IN (1) THEN '32'
+                      WHEN NVL(HG.DEVREDILEN_KURUM,0)  IN (3) THEN '33'
+                      WHEN SINIF_TURU IN (5) THEN '98'
+                      WHEN SINIF_TURU IN (8) THEN '34'
+                      WHEN SINIF_TURU IS NULL THEN '97'
+--                      WHEN SINIF_TURU IN ('Diğer') THEN '98'
+--                      WHEN SINIF_TURU IN ('Belirtilmedi') THEN '99'
+--                      WHEN SINIF_TURU IN ('Turistin Sağlığı') THEN '98'
+/*
+GSS- 30 
+BAĞKUR - 31 
+SSK - 32 
+ES - 33
+ÖZEL SİGORTA - 34
+YOK - 97
+DİĞER 98 
+BELİRTİLMEDİ -99
+SAĞ TURZ. - 35
+TURİST - 36
+*/
+                      /*
+                      (sinif_turu,
+                        2, 'Ücretli',
+                        4, 'Yurt Dışı Sigortalı',
+                        4, 'SSK YurtDışı',
+                        5, 'Saðlık Turizmi',
+                        1, 'Resmi',
+                        1, 'Emekli Sandıðı',
+                        1, 'SSK',
+                        1, 'YeşilKart',
+                        1, '1005 ıstiklal Madalyası',
+                        1, '18 Yaş Altı'
+                       ) AS hs_kurumturu
+                      */
+                      
+                    ELSE '32' END
+                    FROM FONETHBS.HASTA_SINIF HS
+                    WHERE HS.ID = HG.SINIF_ID 
+                    
+           ) AS SOSYAL_GUVENCE_DURUMU#K,
+--    (   SELECT
+--            CASE
+ --             WHEN HS_KURUMTURU IN ('S.G.K', 'YeşilKart', 'Yurt Dışı Sigortalı') THEN 'GSS'
+  --            WHEN HS_KURUMTURU IN ('BağKur') THEN 'BAĞKUR'
+--              WHEN HS_KURUMTURU IN ('SSK', 'SSK Diğer', 'SSK YurtDışı') THEN 'SSK'
+--              WHEN HS_KURUMTURU IN ('Emekli Sandığı') THEN 'EMEKLİ SANDIĞI'
+--             WHEN HS_KURUMTURU IN ('Sağlık Turizmi') THEN 'DİĞER'
+--              WHEN HS_KURUMTURU IN ('Özel Sigorta') THEN 'ÖZEL SİGORTA'
+--              WHEN HS_KURUMTURU IN ('Yok') THEN 'YOK'
+--              WHEN HS_KURUMTURU IN ('Diğer') THEN 'DİĞER'
+--             WHEN HS_KURUMTURU IN ('Belirtilmedi') THEN 'BELİRTİLMEDİ'
+--              WHEN HS_KURUMTURU IN ('Turistin Sağlığı') THEN 'DİĞER'
+--              ELSE 'YOK'
+--            END
+--        FROM FONETHBYSADM.H_HSINIF HS
+--        WHERE HS.HS_ID = HK_HSINIFID
+--    ) AS SOSYAL_GUVENCE_DURUMU#A#Z,
+           '530da738-2be0-4adc-a7c1-aca18c66a3f8' AS SOSYAL_GUVENCE_DURUMU#C,
+           DECODE(PK.TC_KIMLIK_NO, '99999999999',NULL,PK.TC_KIMLIK_NO) AS HEKIM_KIMLIK_NUMARASI#Z,
+           DECODE(HG.VAKA_TURU ,1,1,2,4,3,2,4,3,5,5,6,6,8,2,13,8,16,2,17,4,1) AS VAKA_TURU#K,
+           USS.GET_GUID_VALUE('46380e82-d8b1-407d-9554-255d95a9f959', DECODE(HG.VAKA_TURU ,1,1,2,4,3,2,4,3,5,5,6,6,8,2,13,8,16,2,17,4,1)) AS VAKA_TURU#A#Z,
+           '46380e82-d8b1-407d-9554-255d95a9f959' AS VAKA_TURU#C,
+           (SELECT MAX(MR.RANDEVU_HRN) FROM FONETHBS.MHRS_RANDEVU MR WHERE MR.KABUL_BIRIM_SEVK_ID = BS.ID) AS MHRS_RANDEVU_NUMARASI#Z,
+           DECODE(HG.VAKA_TURU, '3', CASE WHEN (SELECT A.TRIAJ FROM FONETHBS.POLIKLINIK A WHERE A.BIRIM_SEVK_ID = BS.ID) IN (1,2,3) THEN (SELECT A.TRIAJ FROM FONETHBS.POLIKLINIK A WHERE A.BIRIM_SEVK_ID = BS.ID) ELSE 0 END, 0) AS TRIAJ#Z,
+           USS.GET_SYSTAKIPNO(HG.ID) AS SYSTakipNo#Z
+FROM "FONETHBS"."HASTA_BIRIM_SEVK"/**/"BS"
+LEFT JOIN FONETHBS.POLIKLINIK POL ON POL.BIRIM_SEVK_ID= BS.ID
+INNER JOIN FONETHBS.HASTA_GELIS HG ON HG.ID = BS.HASTA_GELIS_ID
+LEFT JOIN FONETHBS.KIMLIK PK ON PK.ID = BS.PERSONEL_ID
+LEFT JOIN FONETHBS.HASTA_SINIF HS ON HS.ID = HG.SINIF_ID
+WHERE BS.SEVK_TARIHI > '01.01.2015' 
+AND HG.ID = 80001955
+
