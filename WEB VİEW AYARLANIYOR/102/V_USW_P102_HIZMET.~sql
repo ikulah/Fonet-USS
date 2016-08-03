@@ -1,3 +1,4 @@
+
 SELECT
 "Y"."HI_ID" AS DETAY_ID,
 "Y"."HI_KAYITID" AS HK_ID,
